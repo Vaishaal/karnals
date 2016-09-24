@@ -19,12 +19,12 @@ def learnPrimal(trainData, labels, W=None, reg=0.1):
     if (W == None):
         W = np.ones(n)[:, np.newaxis]
 
-    print "X SHAPE ", trainData.shape
-    print "Computing XTX"
+    print("X SHAPE ", trainData.shape)
+    print("Computing XTX")
     sqrtW = np.sqrt(W)
     X *= sqrtW
     XTWX = X.T.dot(X)
-    print "Done Computing XTX"
+    print("Done Computing XTX")
     idxes = np.diag_indices(XTWX.shape[0])
     XTWX[idxes] += reg
     y = np.eye(max(labels) + 1)[labels]
@@ -46,7 +46,7 @@ def learnDual(gramMatrix, labels, reg=0.1, TOT_FEAT=1, NUM_TRAIN=1):
     y = np.eye(max(labels) + 1)[labels]
     idxes = np.diag_indices(gramMatrix.shape[0])
     gramMatrix /= float(TOT_FEAT)
-    print "reg is " + str(reg)
+    print("reg is " + str(reg))
     gramMatrix[idxes] += (reg)
     model = scipy.linalg.solve(gramMatrix, y)
     gramMatrix[idxes] -= (reg)
@@ -62,8 +62,8 @@ def trainAndEvaluatePrimalModel(XTrain, XTest, labelsTrain, labelsTest, reg=0.0,
     yTrainPred = np.argmax(XTrain.dot(model), axis=1)
     yTestPred = np.argmax(XTest.dot(model), axis=1)
 
-    print "Train acc", metrics.accuracy_score(yTrainPred, labelsTrain)
-    print "Test acc", metrics.accuracy_score(yTestPred, labelsTest)
+    print("Train acc", metrics.accuracy_score(yTrainPred, labelsTrain))
+    print("Test acc", metrics.accuracy_score(yTestPred, labelsTest))
     train_roc = metrics.roc_curve(labelsTrain, yTrainHat)
     test_roc = metrics.roc_curve(labelsTest, yTestHat)
     return (train_roc, test_roc)

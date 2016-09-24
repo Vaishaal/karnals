@@ -10,7 +10,7 @@ def convertSeqToMatrix(XSeq):
     X = np.zeros((len(XSeq), 4*len(XSeq[0])))
     for i,seq in enumerate(XSeq):
         x = np.zeros(4*100)
-        X[i] = np.concatenate(map(lambda x: ATCG[ATCG_MAP[x]], seq))
+        X[i] = np.concatenate([ATCG[ATCG_MAP[x]] for x in seq])
     return X
 
 
@@ -48,18 +48,18 @@ def loadFoldFromText(foldId):
 
 def loadFromText(XTrainFile, XTestFile, yTrainFile, yTestFile):
     with open(XTrainFile) as XFile:
-        print("Loading XTrain... from " + XTrainFile)
+        print(("Loading XTrain... from " + XTrainFile))
         XTrainRaw = np.loadtxt(XFile, dtype="uint8", delimiter=",")
 
     with open(XTestFile) as XFile:
-        print("Loading XTest... from " + XTestFile)
+        print(("Loading XTest... from " + XTestFile))
         XTestRaw = np.loadtxt(XFile, dtype="uint8", delimiter=",")
 
     with open(yTrainFile) as yFile:
-        print("Loading yTrain... from " + yTrainFile)
+        print(("Loading yTrain... from " + yTrainFile))
         yTrainRaw = np.loadtxt(yFile, dtype="uint8", delimiter=",")
     with open(yTestFile) as yFile:
-        print("Loading yTest.. from " + yTestFile)
+        print(("Loading yTest.. from " + yTestFile))
         yTestRaw = np.loadtxt(yFile, dtype="uint8", delimiter=",")
     return (XTrainRaw, XTestRaw, yTrainRaw, yTestRaw)
 
