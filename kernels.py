@@ -47,7 +47,8 @@ def generateConvFeatures(X, W, offset=None, gpu=False, num_feature_batches=1, ba
     n = W.shape[-1]/4
     if (gpu):
         print("GPU IMPLEMENTATION STILL BUGGY")
-        conv_out = convTheano(X,W,num_feature_batches=num_feature_batches,batch_size=batch_size)
+	fbs = np.ceil(W.shape[-1]/num_feature_batches)
+        conv_out = convTheano(X,W,feature_batch_size=fbs, num_feature_batches=num_feature_batches,batch_size=batch_size)
     else:
         conv_out = convCPU(X,W, offset)
 
