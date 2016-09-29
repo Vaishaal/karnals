@@ -43,11 +43,13 @@ def generateNgrams(x, n, alpha_size=4):
         ngrams[i] = x[i*alpha_size:(i+n)*alpha_size]
     return ngrams
 
-def generateConvFeatures(X, W, offset=None, gpu=False, num_feature_batches=1, batch_size=4096, alpha_size=4):
+def generateConvFeatures(X, W, offset=None, gpu=False, feature_batch_size=1024, batch_size=4096, alpha_size=4):
     n = W.shape[-1]/4
     if (gpu):
-        print("GPU IMPLEMENTATION STILL BUGGY")
-        conv_out = convTheano(X,W,num_feature_batches=num_feature_batches,batch_size=batch_size)
+	num_feature_batches = int(np.ceil(W.shape[-1]/feature_batch_size))
+	print(num_feature_batches)
+	
+        conv_out = convTheano(X,W,feature_batch_size=feature_batch_size, batch_size=batch_size)
     else:
         conv_out = convCPU(X,W, offset)
 
@@ -66,12 +68,13 @@ def convCPU(X, W, offset, alpha_size=4):
         xlift_conv += offset
         np.cos(xlift_conv, xlift_conv)
         pool_out = np.sum(xlift_conv, axis=0)
+	pool_out *= scale
         X_lift[i] = pool_out
 
     return X_lift
 
 
-def convTheano(X, W, batch_size=4096, num_feature_batches=1, feature_batch_size=2048, alpha_size=4):
+def convTheano(X, W, batch_size=4096, feature_batch_size=2048, alpha_size=4):
     X = X.reshape(X.shape[0], 1, 1, X.shape[1]).astype('float32')
     W = W.reshape(W.shape[0], 1, 1, W.shape[1]).astype('float32')
     fbs = feature_batch_size
@@ -79,8 +82,8 @@ def convTheano(X, W, batch_size=4096, num_feature_batches=1, feature_batch_size=
     D = W.shape[0]
     conv_out_shape = int((X.shape[-1] - W.shape[-1])/alpha_size + 1)
     XOut = np.zeros((X.shape[0], 2*W.shape[0]))
-    num_batches = int(np.ceil(X.shape[0]/batch_size))
-    num_feature_batches = int(np.ceil(W.shape[0]/feature_batch_size))
+    num_batches = int(np.ceil(X.shape[0]/float(batch_size)))
+    num_feature_batches = int(np.ceil(W.shape[0]/float(feature_batch_size)))
     WTheano = None
     XBatchTheano = None
     for fb in range(num_feature_batches):
@@ -117,8 +120,6 @@ def convTheano(X, W, batch_size=4096, num_feature_batches=1, feature_batch_size=
 
             out = np.concatenate((pool_sin_out, pool_cos_out), axis=-1)
             XOut[start:end, f_start:f_end] = out.reshape(size, fbs*2)
-    XBatchTheano.set_value([[[[]]]])
-    WTheano.set_value([[[[]]]])
     return XOut
 
 def cpu_to_gpu_var(x):
