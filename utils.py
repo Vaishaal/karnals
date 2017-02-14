@@ -2,9 +2,9 @@ import csv
 import numpy as np
 
 
-ATCG_MAP = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
+ATCG_MAP = {'A': 0, 'T': 1, 'C': 2, 'G': 3, 'N': 0}
 ATCG_REV_MAP = ['A', 'T', 'C', 'G']
-ATCG = np.eye(4)
+ATCG = np.vstack((np.eye(4), np.zeros(4)))
 
 def convertSeqToMatrix(XSeq):
     X = np.zeros((len(XSeq), 4*len(XSeq[0])))
