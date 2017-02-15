@@ -12,7 +12,6 @@ from theano.misc.pycuda_utils import *
 from theano.gof.utils import give_variables_names
 from pycuda.cumath import cos as pycuda_cos
 from pycuda.compiler import SourceModule
-from theano.gpuarray import dnn 
 import theano.sandbox.cuda as cuda_ndarray
 import theano
 
@@ -74,7 +73,7 @@ def convCPU(X, W, offset, alpha_size=4):
     return X_lift
 
 
-def convTheano(X, W, batch_size=4096, feature_batch_size=2048, alpha_size=4):
+def convTheano(X, W, batch_size=4096, feature_batch_size=2048):
     X = X.reshape(X.shape[0], 1, 1, X.shape[1]).astype('float32')
     W = W.reshape(W.shape[0], 1, 1, W.shape[1]).astype('float32')
     fbs = feature_batch_size
@@ -83,13 +82,14 @@ def convTheano(X, W, batch_size=4096, feature_batch_size=2048, alpha_size=4):
     conv_out_shape = int((X.shape[-1] - W.shape[-1])/alpha_size + 1)
     XOut = np.zeros((X.shape[0], 2*W.shape[0]))
     num_batches = int(np.ceil(X.shape[0]/float(batch_size)))
+
     num_feature_batches = int(np.ceil(W.shape[0]/float(feature_batch_size)))
+    print(num_feature_batches)
     WTheano = None
     XBatchTheano = None
     for fb in range(num_feature_batches):
         print("Feature Batch ", fb)
-        f_start = fb*(fbs*2)
-        f_end = (fb+1)*(fbs*2)
+        f_start = fb*(fbs*2) f_end = (fb+1)*(fbs*2)
         W_block = W[fb*fbs:(fb+1)*fbs]
         if (WTheano == None):
             WTheano = shared(W_block)
