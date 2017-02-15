@@ -46,11 +46,10 @@ def conv_multi_gpu(X, W, batch_size=4096, feature_batch_size=1024, num_gpu=1, lo
         t = Process(target=conv_multi_gpu_handler, args=args)
         t.start()
         tasks.append(t)
-
-    X_out = np.zeros(X_out_mmap.shape)
-    np.copyto(X_out, X_out_mmap)
     for t in tasks:
         t.join()
+    X_out = np.zeros(X_out_mmap.shape, dtype='float32')
+    np.copyto(X_out, X_out_mmap)
     return X_out
 
 
