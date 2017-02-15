@@ -17,6 +17,7 @@ import theano
 
 from theano.sandbox.cuda.var import CudaNdarrayVariable
 from theano.sandbox.cuda.basic_ops import gpu_contiguous, gpu_from_host
+import gc
 
 def computeDistanceMatrix(XTest, XTrain):
     XTrain = XTrain.reshape(XTrain.shape[0], -1)
@@ -121,6 +122,9 @@ def convTheano(X, W, batch_size=4096, feature_batch_size=2048, alpha_size=4, gpu
 
             out = np.concatenate((pool_sin_out, pool_cos_out), axis=-1)
             XOut[start:end, f_start:f_end] = out.reshape(size, fbs*2)
+        print("Garbage Collecting")
+        for _ in range(10):
+            gc.collect()
     return XOut
 
 def cpu_to_gpu_var(x):

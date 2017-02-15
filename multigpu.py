@@ -25,10 +25,10 @@ def conv_multi_gpu_handler(gpu, X_out_loc, X_out_start_idx, X_out_end_idx, X_out
     return 0
 
 
-def conv_multi_gpu(X, W, batch_size=4096, feature_batch_size=1024, num_gpu=1, loc="/tmp"):
+def conv_multi_gpu(X, W, batch_size=4096, feature_batch_size=1024, num_gpu=1, loc="/tmp", tag=""):
     assert W.shape[0] % num_gpu == 0, "Num filters must be divisble by num gpu"
     features_per_gpu = int(W.shape[0]/num_gpu)
-    X_out_loc = loc + "/X_lift_mmap"
+    X_out_loc = loc + "/X_lift_mmap_{0}".format(tag)
     X_out_shape = (X.shape[0], W.shape[0]*2)
     X_out_mmap = np.memmap(X_out_loc, dtype='float32', mode='w+', shape=X_out_shape)
     tasks = []
