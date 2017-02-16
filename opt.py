@@ -1,6 +1,8 @@
 import scipy.linalg
 import sklearn.metrics as metrics
 import numpy as np
+import numba
+from numba import jit
 
 
 def evaluateDualModel(kMatrix, model, TOT_FEAT=1):
@@ -15,7 +17,7 @@ def learnPrimal(trainData, labels, W=None, reg=0.1):
 
     trainData = trainData.reshape(trainData.shape[0],-1)
     n = trainData.shape[0]
-    X = np.ascontiguousarray(trainData, dtype=np.float32).reshape(trainData.shape[0], -1)
+    X = np.ascontiguousarray(trainData, dtype=np.float32).reshape(trainData.shape[0], -1).copy()
     if (W == None):
         W = np.ones(n)[:, np.newaxis]
 
@@ -40,7 +42,7 @@ def trainAndEvaluateDualModel(KTrain, KTest, labelsTrain, labelsTest, reg=0.1):
     test_roc = metrics.roc_curve(labelsTest, predTestWeights)
     train_pr_auc = metrics.average_precision_score(labelsTrain, predTrainWeights)
     test_pr_auc = metrics.average_precision_score(labelsTest, predTestWeights)
-    return (train_roc, test_roc, train_pr_auc, test_pr_auc)
+    return (train_roc, test_roc, train_pr_auc, test_pr_auc, predTrainWeights, predTestWeights)
 
 def learnDual(gramMatrix, labels, reg=0.1, TOT_FEAT=1, NUM_TRAIN=1):
     ''' Learn a model from K matrix -> labels '''
@@ -68,9 +70,56 @@ def trainAndEvaluatePrimalModel(XTrain, XTest, labelsTrain, labelsTest, reg=0.0,
 
     print("Train acc", metrics.accuracy_score(yTrainPred, labelsTrain))
     print("Test acc", metrics.accuracy_score(yTestPred, labelsTest))
+
     train_roc = metrics.roc_curve(labelsTrain, yTrainHat)
     test_roc = metrics.roc_curve(labelsTest, yTestHat)
+    train_pr = metrics.precision_recall_curve(labelsTrain, yTrainHat)
+    test_pr = metrics.precision_recall_curve(labelsTest, yTestHat)
     train_pr_auc = metrics.average_precision_score(labelsTrain, yTrainHat)
     test_pr_auc = metrics.average_precision_score(labelsTest, yTestHat)
-    return (train_roc, test_roc, train_pr_auc, test_pr_auc)
+    return (train_roc, test_roc, train_pr, test_pr, train_pr_auc, test_pr_auc, yTrainHat, yTestHat)
 
+
+
+@jit(nopython=True)
+def rbf(K, gamma):
+    for x in range(K.shape[0]):
+        for y in range(K.shape[1]):
+            K[x,y] = np.exp(gamma*K[x,y])
+    return K
+
+
+def computeRBFGramMatrix(K, XTrainNorms, XTestNorms, gamma=1, gamma_sample=10000):
+    XTrainNorms = XTrainNorms.reshape(XTrainNorms.shape[0], 1)
+    XTestNorms = XTestNorms.reshape(XTestNorms.shape[0], 1)
+    print("TURNING K -> DISTANCE")
+    K *= -2
+    K += XTrainNorms.T
+    K += XTestNorms 
+    if (gamma == None):
+        print("Calculating gamma")
+        samples = numpy.random.choice(K.shape[0], gamma_sample*2, replace=False)
+        x1 = samples[:gamma_sample]
+        x2 = samples[gamma_sample:]
+        sample_d = K[x1, x2]
+        print("Sample d shape ", sample_d.shape)
+        median = numpy.median(sample_d)
+        gamma = 2.0/median
+        print(gamma)
+    gamma = -1.0 * gamma
+
+    print(np.max(K))
+    print(np.min(K))
+    print("Computing RBF")
+    return rbf(K, gamma), -1.0*gamma
+
+def computeDistanceMatrix(XTest, XTrain):
+    XTrain = XTrain.reshape(XTrain.shape[0], -1)
+    XTest = XTest.reshape(XTest.shape[0], -1)
+    XTrain_norms = (np.linalg.norm(XTrain, axis=1) ** 2)[:, np.newaxis]
+    XTest_norms = (np.linalg.norm(XTest, axis=1) ** 2)[:, np.newaxis]
+    K = XTest.dot(XTrain.T)
+    K *= -2
+    K += XTrain_norms.T
+    K += XTest_norms  
+    return K

@@ -50,16 +50,8 @@ def conv_multi_gpu(X, W, batch_size=4096, feature_batch_size=1024, num_gpu=1, lo
         t.join()
     X_out = np.zeros(X_out_mmap.shape, dtype='float32')
     np.copyto(X_out, X_out_mmap)
+    del X_out_mmap
     return X_out
-
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     np.random.seed(0)

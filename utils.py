@@ -20,7 +20,8 @@ def alphaVectorToString(alphavector, alpha_size=4):
 
 def vectorToString(vector, alpha_size=4):
     out = ''
-    for i in range(vector.shape[0]/alpha_size):
+    
+    for i in range(int(vector.shape[0]/alpha_size)):
         out += alphaVectorToString(vector[i*alpha_size:(i+1)*alpha_size])
     return out
 
